@@ -1,0 +1,25 @@
+#!/usr/bin/env kscript
+
+import kotlin.math.*
+
+fun calcFuel(s : String?) : Float {
+  if (s == null || s.trim().length == 0) {
+    return 0f;
+  } else {
+    val mass = s.toFloat()
+    val fuel = max(0f, floor(mass / 3.0f) - 2.0f)
+    return fuel;
+  }
+}
+
+
+if (args.size == 1) {
+  println("Usage: Call with puzzle input (mass) as first parameter")
+  println("For a mass of ${args[0]} you need fuel: '${calcFuel(args[0])}'")
+} else {
+  println("Reading from stdin")
+  val lines = generateSequence() { readLine() }.toList() 
+  val total = lines.map {calcFuel(it)}.sum() 
+  println("Total fuel: '${total}'")
+}
+
