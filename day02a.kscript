@@ -1,0 +1,38 @@
+#!/usr/bin/env kscript
+
+tailrec fun runProgram(instructionPointer : Int, program : Map<Int, Int>) : Map<Int, Int> {
+  val instruction = program.get(instructionPointer)
+  if (instruction != 1 && instruction != 2) {
+    return program;
+  } else {
+    val pos1 = program.get(instructionPointer + 1)
+    val arg1 = program?.get(pos1) ?: 0
+    val pos2 = program.get(instructionPointer + 2)
+    val arg2 = program?.get(pos2) ?: 0
+
+    val resultPointer = program.get(instructionPointer + 3) ?: -1
+    val result = if (instruction == 1) (arg1 + arg2) else (arg1 * arg2)
+    return runProgram(instructionPointer + 4, program.plus(resultPointer to result))
+    
+  }
+}
+
+fun compileAndRunProgram(code : String?) : Map<Int, Int> {
+  if (code == null) {
+    return mapOf()
+  } else {
+    val program = code.trim().split(",").withIndex().map{it.index to it.value.toInt()}.toMap()
+    return runProgram(0, program)
+  }
+}
+
+if (args.size == 1) {
+  println("Usage: Call with puzzle input (int program) as first parameter")
+  println("A input of ${args[0]} resuts to: '${compileAndRunProgram(args[0])}'")
+} else {
+  println("Reading from stdin, please enter int program")
+  val code = readLine()
+  val result = compileAndRunProgram(code)
+  println("Total fuel: '${result}'")
+}
+
