@@ -1,0 +1,83 @@
+#!/usr/bin/env kscript
+
+import kotlin.math.abs
+import kotlin.sequences.sequence
+import kotlin.sequences.emptySequence
+
+data class Point(val x : Int, val y : Int) {
+  fun distance() : Int {
+    return abs(x) + abs(y)
+  }
+  fun scalarMul(s : Int) : Point {
+    return Point(x * s, y * s)
+  }
+
+  fun add(o : Point) : Point {
+    return Point(x + o.x, y + o.y)
+  }
+}
+
+enum class Direction(val shortcut : String, val delta : Point) {
+  UP("U", Point(0, 1)),
+  DOWN("D", Point(0, -1)),
+  LEFT("L", Point(-1, 0)),
+  RIGHT("R", Point(1, 0))
+}
+
+val directionByShortcut = Direction.values().map{it.shortcut to it}.toMap()
+
+data class Wire(val start : Point, val direction : Direction, val distance : Int) {
+  val end = start.add(direction.delta.scalarMul(distance))
+
+  fun points() : Sequence<Point> {
+    return sequence {
+      for (d in 0 .. distance) {
+        yield(start.add(direction.delta.scalarMul(d)))
+      }
+    }
+  }
+}
+
+fun toWire(lastPoint : Point, s : String) : Wire? {
+  val match = Regex("(\\w)(\\d+)").matchEntire(s)
+  if (match == null) {
+    return null
+  } else {
+    val (directionShortcut, distance) = match.destructured
+    val direction = directionByShortcut.get(directionShortcut)
+    if (direction == null) {
+      return null
+    } else {
+      return Wire(lastPoint, direction, distance.toInt())
+    }
+  }
+}
+
+fun toWires(s : String?) : Sequence<Wire> {
+  if (s == null) {
+    return emptySequence()
+  } else {
+    return sequence {
+      var endPoint = Point(0,0)
+      for (token in s.trim().split(",").map{it.trim()}){
+        val w = toWire(endPoint, token)
+        if (w != null) {
+          yield(w as Wire)
+          endPoint = w.end
+        }
+      }
+    }
+  }
+}
+
+if (args.size != 2) {
+  System.err.println("Please call with exactly two parameters, one for each wire")
+  kotlin.system.exitProcess(-1)
+}
+
+val wire1 = toWires(args[0])
+val wire2 = toWires(args[1])
+val points1 = wire1.flatMap{it.points()}.toSet()
+val points2 = wire2.flatMap{it.points()}.toSet()
+val commonPoints = points1.intersect(points2).filter{it.x != 0 && it.y != 0}
+println("Shortest distance: '${commonPoints.map{it.distance()}.min()}'")
